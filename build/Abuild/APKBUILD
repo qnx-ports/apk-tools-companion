@@ -1,0 +1,59 @@
+pkgname=apk-tools
+pkgver=3.0.0_rc5
+_luaver=5.4
+pkgrel=4
+pkgdesc="Alpine Package Keeper - package manager for alpine"
+arch="all"
+url="https://gitlab.alpinelinux.org/alpine/apk-tools"
+license="GPL-2.0-only"
+subpackages="$pkgname-dev $pkgname-doc python3-apk:pyapk lua$_luaver-apk:luaapk"
+depends="zstd-libs zlib-ng libssl3 qnx-io-sock"
+makedepends="meson ninja zstd-dev zlib-ng-dev openssl-dev lua$_luaver-libs lua$_luaver lua$_luaver-dev pkgconf-dev python3-dev scdoc qnx-io-sock-dev"
+source="https://gitlab.alpinelinux.org/alpine/apk-tools/-/archive/v$pkgver/apk-tools-v$pkgver.tar.gz
+    0001-qnx-compat.patch
+"
+builddir="$srcdir/$pkgname-v$pkgver"
+
+build() {
+    _extra_flags=""
+    if [[ $CBUILD = $CHOST ]]; then
+        # Compile natively
+        _extra_flags="-Dc_args=-D_QNX_SOURCE -Dc_link_args=-Wl,-lsocket"
+    else
+        # Cross compiling
+        # We use meson for its better cross compile capabilities
+        BUILD_ROOT=$CBUILDROOT $CBUILDROOT/usr/bin/gen-meson-cross
+        _extra_flags="--cross-file=meson.cross"
+    fi
+    
+    # Generate ninja build files
+    meson setup build  $_extra_flags -Dprefix=/usr -Dlua=enabled -Dlua_version=5.4 -Dpython=enabled -Dhelp=enabled -Dcompressed-help=false -Ddocs=enabled
+    meson compile -C build
+}
+
+package() {
+    DESTDIR="$pkgdir" meson install -C build
+    install -d "$pkgdir"/usr/lib/apk/db \
+        "$pkgdir"/usr/lib/apk/exec \
+        "$pkgdir"/etc/apk/keys \
+        "$pkgdir"/etc/apk/protected_paths.d
+
+    #install -Dm644 "$srcdir"/_apk "$pkgdir"/usr/share/zsh/site-functions/_apk
+}
+
+luaapk() {
+    pkgdesc="Lua module for apk-tools"
+    depends=""
+    amove usr/lib/lua
+}
+
+pyapk() {
+    pkgdesc="Python module for apk-tools"
+    depends=""
+    amove usr/lib/python*
+}
+
+sha512sums="
+7a93c25f0d0d7d66a06d2a1d89ab0c258fe18104d0cd06303c5bc75321f4de1bf7691aa7b9d7007ffe0cf512f3e8b9a315fc58bbd74a3d78f3179e8c085b80b5  apk-tools-v3.0.0_rc5.tar.gz
+6efc1f1e4b68897c96c384e815bf984341ee6fbf36c34863441110fa21127ddd8aed8d8369393f94a94cee52930229a0fc0a2f20363acfb3098d1ec8057a048b  0001-qnx-compat.patch
+"
