@@ -1,7 +1,7 @@
 pkgname=apk-tools
 pkgver=3.0.0_rc5
 _luaver=5.4
-pkgrel=4
+pkgrel=${pkgrel:-0}
 pkgdesc="Alpine Package Keeper - package manager for alpine"
 arch="all"
 url="https://gitlab.alpinelinux.org/alpine/apk-tools"
@@ -53,6 +53,7 @@ pyapk() {
     amove usr/lib/python*
 }
 
+options="$options ${DISABLE_CHECK:+!check}"
 sha512sums="
 7a93c25f0d0d7d66a06d2a1d89ab0c258fe18104d0cd06303c5bc75321f4de1bf7691aa7b9d7007ffe0cf512f3e8b9a315fc58bbd74a3d78f3179e8c085b80b5  apk-tools-v3.0.0_rc5.tar.gz
 6efc1f1e4b68897c96c384e815bf984341ee6fbf36c34863441110fa21127ddd8aed8d8369393f94a94cee52930229a0fc0a2f20363acfb3098d1ec8057a048b  0001-qnx-compat.patch
